@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Family City</title>
+  <meta name="description" content="A city you build for your household — every building is an agent with its own job and schedule." />
+  <meta name="color-scheme" content="dark" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏙️</text></svg>" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">🏙️</span>
+        <div>
+          <h1 id="cityName">Home Base</h1>
+          <p id="cityTagline" class="brand-tag">the household runs itself</p>
+        </div>
+      </div>
+      <div class="ticker-wrap">
+        <div id="ticker" class="ticker" role="list" aria-label="Agent status"></div>
+      </div>
+    </header>
+
+    <div class="stage">
+      <aside id="rail" class="rail" aria-label="Buildings"></aside>
+
+      <main class="map" id="map">
+        <div class="map-tools">
+          <button id="addBuilding" class="tool primary wide" type="button" title="Add a building">Build</button>
+          <button id="zoomIn" class="tool" type="button" aria-label="Zoom in">＋</button>
+          <button id="zoomOut" class="tool" type="button" aria-label="Zoom out">－</button>
+          <button id="recenter" class="tool" type="button" aria-label="Re-center the city">◎</button>
+        </div>
+        <p class="place-hint">Pick an empty lot for your new building · <kbd>Esc</kbd> to cancel</p>
+      </main>
+    </div>
+
+    <aside id="panel" class="panel" hidden aria-label="Building details"></aside>
+    <div id="modal" class="modal" hidden></div>
+  </div>
+
+  <noscript>
+    <p style="padding:2rem;color:#dbe6ff">Family City needs JavaScript. Everything runs locally in your browser — nothing is sent anywhere.</p>
+  </noscript>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
