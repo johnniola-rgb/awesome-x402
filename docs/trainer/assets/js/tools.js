@@ -1,0 +1,228 @@
+/* tools.js — the 30 tools most day and swing traders actually use, with the honest
+   version of what each one does, how to read it, and how it fails.
+   `chart` links a tool to a toggle on the simulator chart. */
+(function (w) {
+  'use strict';
+  var TT = w.TT = w.TT || {};
+
+  TT.tools = [
+    { n: 1, id: 'candles', name: 'Candlestick Charts', cat: 'Price', level: 'Essential', chart: null,
+      what: 'Each candle encodes four numbers — open, high, low, close — for one slice of time. The body is open-to-close; the wicks are the extremes that were rejected.',
+      read: 'Body size = conviction. Wick length = rejection. Where the close sits within the range tells you who won that bar. That single idea carries more weight than most indicators.',
+      settings: 'Day trading: 1m, 2m, 5m, 15m. Swing: daily and weekly. Always look at a higher timeframe before executing on a lower one.',
+      best: 'Everything. It is the base layer every other tool is derived from.',
+      pitfall: 'Reading patterns without location. The same hammer is a buy at support and noise in the middle of a range.' },
+
+    { n: 2, id: 'sr', name: 'Support & Resistance', cat: 'Structure', level: 'Essential', chart: 'levels',
+      what: 'Horizontal price zones where the market has repeatedly reversed. They are areas, not lines — think in zones a few cents (or a few dollars) wide.',
+      read: 'More touches = more significance, up to a point: a level tested four times is usually about to break because the liquidity behind it has been consumed. Broken resistance tends to act as support (polarity).',
+      settings: 'Mark swing highs/lows, prior day high/low/close, the overnight range, and obvious round numbers.',
+      best: 'Defining where to enter, where to place stops and where to take profit — all three.',
+      pitfall: 'Drawing 20 levels. If everything is a level, nothing is. Keep the three that matter for today.' },
+
+    { n: 3, id: 'trendlines', name: 'Trendlines & Channels', cat: 'Structure', level: 'Essential', chart: null,
+      what: 'Diagonal lines connecting successive higher lows (uptrend) or lower highs (downtrend); a channel adds a parallel line on the other side.',
+      read: 'The slope tells you the rate of change. A break of a steep trendline often just means the trend is slowing to a sustainable pace, not reversing.',
+      settings: 'Connect at least two points and require a third touch to validate. Use candle bodies or wicks consistently — pick one.',
+      best: 'Spotting momentum shifts early and framing pullback entries.',
+      pitfall: 'Trendlines are subjective and easy to redraw until they fit your bias. If you have redrawn it three times, you are curve fitting your own chart.' },
+
+    { n: 4, id: 'ma', name: 'Moving Averages (SMA / EMA)', cat: 'Trend', level: 'Essential', chart: 'ema',
+      what: 'The average price over N periods. EMA weights recent bars more heavily, so it turns faster than an SMA of the same length.',
+      read: 'Slope = trend direction. Price above a rising average is the simplest definition of an uptrend. Separation between fast and slow averages measures momentum.',
+      settings: 'Intraday: 9 and 20 EMA. Swing: 20/50 EMA and the 200 SMA as the regime filter. The 200-day is watched by so many people that it becomes self-fulfilling.',
+      best: 'Dynamic support/resistance in trends, plus a mechanical trend filter that stops you fading strength.',
+      pitfall: 'Averages lag by construction. In a range they whipsaw you, which is why an ADX or volatility filter belongs next to them.' },
+
+    { n: 5, id: 'vwap', name: 'VWAP (Volume Weighted Average Price)', cat: 'Intraday', level: 'Essential (day)', chart: 'vwap',
+      what: 'The average price paid today, weighted by volume. It resets each session.',
+      read: 'Above VWAP, the average buyer today is profitable and dips get bought. Below it, the average buyer is losing and rallies get sold. Institutions are literally benchmarked against it.',
+      settings: 'Session VWAP for day trading. Add 1 and 2 standard-deviation bands to frame mean reversion.',
+      best: 'The single most useful intraday reference level. Entries, exits and a directional bias all come off it.',
+      pitfall: 'VWAP is nearly useless in the first few minutes (too little data) and on illiquid names. It is also not support — it is a reference.' },
+
+    { n: 6, id: 'avwap', name: 'Anchored VWAP', cat: 'Intraday / Swing', level: 'Intermediate', chart: 'avwap',
+      what: 'VWAP anchored to a specific event — an earnings gap, a swing low, the first bar of a base — instead of the session start.',
+      read: 'It shows the average price of everyone who bought since that event. Price reclaiming an anchored VWAP means those buyers are whole again, which changes their behaviour.',
+      settings: 'Anchor to the highest-volume bar, a major gap, a 52-week low, or the start of a base.',
+      best: 'Swing entries and identifying who is trapped.',
+      pitfall: 'Anchor selection is discretionary — choose events that were obviously significant, not random bars.' },
+
+    { n: 7, id: 'volume', name: 'Volume', cat: 'Participation', level: 'Essential', chart: 'volume',
+      what: 'Shares traded per bar. The only non-price input most traders ever need.',
+      read: 'Volume confirms. Breakouts on rising volume tend to hold; breakouts on falling volume tend to fail. A volume spike at the end of a long move is often exhaustion, not continuation.',
+      settings: 'Show a 20-period volume average so you are comparing today to normal rather than eyeballing bar heights.',
+      best: 'Validating breakouts, spotting climaxes and confirming reversals.',
+      pitfall: 'Volume is meaningless without a baseline, and it is distorted at the open, at the close, and on index rebalance days.' },
+
+    { n: 8, id: 'rvol', name: 'Relative Volume (RVOL)', cat: 'Participation', level: 'Intermediate', chart: null,
+      what: 'Today\'s volume divided by the average volume for the same time of day.',
+      read: 'RVOL above 2 means something is happening — news, a catalyst, institutional repositioning. RVOL below 1 means whatever pattern you see is unlikely to follow through.',
+      settings: 'Compare to the 20-day average at the same minute of the session, not to the whole-day average.',
+      best: 'Choosing what to trade today. Professional day traders filter their entire watchlist on RVOL first.',
+      pitfall: 'High RVOL also means high volatility and wider spreads. It is a reason to size DOWN, not up.' },
+
+    { n: 9, id: 'vp', name: 'Volume Profile / Market Profile', cat: 'Participation', level: 'Advanced', chart: 'vp',
+      what: 'Volume distributed across PRICE rather than time. Produces the point of control (POC, most-traded price) and a value area containing ~70% of volume.',
+      read: 'High-volume nodes are magnets and act as support/resistance. Low-volume nodes are voids price travels through quickly. Price tends to rotate between value-area edges until it breaks out.',
+      settings: 'Session profile for day trading; a composite over the last N days or the whole base for swings.',
+      best: 'Finding where price is likely to stall or accelerate, and locating logical targets.',
+      pitfall: 'It is descriptive, not predictive. A POC is where trade happened, not where it must happen again.' },
+
+    { n: 10, id: 'atr', name: 'Average True Range (ATR)', cat: 'Volatility', level: 'Essential', chart: null,
+      what: 'The average size of a bar\'s full range including gaps, usually over 14 periods.',
+      read: 'ATR is the market telling you how much noise to expect. A stop inside 1 ATR will be hit by normal movement, whatever your analysis says.',
+      settings: 'ATR(14). Stops commonly at 1.5-2× ATR; targets at 2-3× ATR.',
+      best: 'Position sizing and stop placement — the two decisions that determine survival.',
+      pitfall: 'ATR expands after the move has already happened. During a volatility spike, yesterday\'s ATR is already stale.' },
+
+    { n: 11, id: 'bb', name: 'Bollinger Bands', cat: 'Volatility', level: 'Intermediate', chart: 'bb',
+      what: 'A 20-period moving average with bands 2 standard deviations above and below.',
+      read: 'The bands measure volatility, not direction. Narrow bands (a "squeeze") mean compression and a coming expansion. "Walking the band" in a strong trend is continuation, NOT an overbought signal.',
+      settings: '20, 2 is standard. Track band WIDTH as its own series to quantify squeezes.',
+      best: 'Spotting volatility contraction before breakouts, and framing mean-reversion trades in ranges.',
+      pitfall: 'Shorting every touch of the upper band in a strong uptrend is one of the most expensive beginner habits there is.' },
+
+    { n: 12, id: 'kc', name: 'Keltner Channels', cat: 'Volatility', level: 'Intermediate', chart: 'kc',
+      what: 'An EMA with bands set at a multiple of ATR rather than standard deviation.',
+      read: 'Smoother than Bollinger Bands. When Bollinger Bands contract INSIDE the Keltner Channels, that is the classic "squeeze" — a quantified coil.',
+      settings: 'EMA 20 with 1.5-2× ATR bands.',
+      best: 'Trend-pullback entries and squeeze detection.',
+      pitfall: 'Very similar to Bollinger Bands — running both without understanding the difference is redundant clutter.' },
+
+    { n: 13, id: 'rsi', name: 'RSI (Relative Strength Index)', cat: 'Momentum', level: 'Essential', chart: 'sub-rsi',
+      what: 'A 0-100 oscillator measuring the ratio of average gains to average losses over N periods.',
+      read: 'Above 70 is "overbought", below 30 "oversold" — but in a strong trend RSI stays overbought for weeks. The higher-value signals are DIVERGENCE (price makes a new high, RSI does not) and the 40/60 zone holding in trends.',
+      settings: 'RSI(14) standard. RSI(2) is used for short-term mean-reversion systems.',
+      best: 'Spotting momentum exhaustion and divergence at extremes.',
+      pitfall: 'Selling purely because RSI > 70 in a trending market. Overbought means strong far more often than it means reversal.' },
+
+    { n: 14, id: 'macd', name: 'MACD', cat: 'Momentum', level: 'Essential', chart: 'sub-macd',
+      what: 'The difference between a 12 and 26 EMA, with a 9-period signal line and a histogram of the gap between them.',
+      read: 'The histogram is the useful part: it measures whether momentum is accelerating or decelerating. A zero-line cross is a trend-change signal; a signal-line cross is an early momentum signal.',
+      settings: '12/26/9 standard. Faster settings on intraday charts produce more noise, not more information.',
+      best: 'Trend confirmation and divergence on daily charts.',
+      pitfall: 'It is two lagging averages subtracted from each other. In a range, MACD crosses are pure noise.' },
+
+    { n: 15, id: 'stoch', name: 'Stochastic Oscillator', cat: 'Momentum', level: 'Intermediate', chart: 'sub-stoch',
+      what: 'Where the close sits within the recent high-low range, smoothed.',
+      read: 'Designed for ranges. In a range, %K crossing %D from below 20 is a decent long trigger. In a trend, it pins at an extreme and stays there.',
+      settings: '14, 3, 3. Slow stochastic reduces false signals.',
+      best: 'Range-bound markets and timing entries within a pullback.',
+      pitfall: 'The single most misused oscillator in trend markets. Check ADX before you trust it.' },
+
+    { n: 16, id: 'adx', name: 'ADX / DMI', cat: 'Trend strength', level: 'Intermediate', chart: 'sub-adx',
+      what: 'ADX measures trend STRENGTH regardless of direction; +DI and -DI show which side is dominant.',
+      read: 'ADX below 20 = range, use mean-reversion tools. ADX above 25 = trend, use continuation tools. A rising ADX with +DI above -DI is a healthy uptrend.',
+      settings: '14 periods.',
+      best: 'Choosing WHICH strategy to run today. This is its real value — a regime filter, not an entry signal.',
+      pitfall: 'ADX lags and says nothing about direction. A high ADX also occurs at the end of trends, right before they break.' },
+
+    { n: 17, id: 'obv', name: 'On-Balance Volume (OBV)', cat: 'Participation', level: 'Intermediate', chart: 'sub-obv',
+      what: 'A running total that adds the day\'s volume on up closes and subtracts it on down closes.',
+      read: 'The level is meaningless; the TREND and divergences matter. OBV making new highs while price consolidates suggests accumulation ahead of a breakout.',
+      settings: 'No parameters. Compare its trend to price\'s trend.',
+      best: 'Confirming accumulation or distribution during a base.',
+      pitfall: 'It treats a 0.01% up close the same as a 5% up close. Crude by design.' },
+
+    { n: 18, id: 'mfi', name: 'Money Flow Index (MFI)', cat: 'Participation', level: 'Intermediate', chart: 'sub-mfi',
+      what: 'RSI weighted by volume — a 0-100 oscillator of money flowing in versus out.',
+      read: 'Above 80 / below 20 flags extremes. Divergence between MFI and price is the higher-quality signal, since it incorporates participation.',
+      settings: '14 periods.',
+      best: 'Confirming whether a price move has real money behind it.',
+      pitfall: 'Same trap as RSI: extremes persist in strong trends.' },
+
+    { n: 19, id: 'fib', name: 'Fibonacci Retracements & Extensions', cat: 'Structure', level: 'Intermediate', chart: 'fib',
+      what: 'Horizontal levels at 23.6%, 38.2%, 50%, 61.8% and 78.6% of a prior swing, plus 127%/161.8% projections beyond it.',
+      read: 'The 38.2-61.8% band is the normal pullback zone in a healthy trend. The 61.8% level is the classic "last defence" — beyond it, the move is usually over.',
+      settings: 'Anchor to a clear, recent swing low-to-high. Be consistent about wicks vs bodies.',
+      best: 'Framing pullback entries and projecting targets.',
+      pitfall: 'It works largely because enough traders watch it. Fib levels that coincide with real structure (a prior swing, VWAP, a moving average) matter; isolated ones rarely do.' },
+
+    { n: 20, id: 'pivots', name: 'Pivot Points', cat: 'Levels', level: 'Intermediate', chart: 'pivots',
+      what: 'Mechanical levels (P, R1-R3, S1-S3) computed from the prior period\'s high, low and close.',
+      read: 'Price above the central pivot is bullish for the session. R1/S1 are the most-reacted-to levels; R3/S3 are reached only on trend days.',
+      settings: 'Daily pivots from the prior session for day trading; weekly/monthly for swings.',
+      best: 'Objective, non-discretionary levels computed before the open — nothing to draw, nothing to fudge.',
+      pitfall: 'Futures and cash-session pivots differ. Pick one convention and keep it.' },
+
+    { n: 21, id: 'orb', name: 'Opening Range', cat: 'Intraday', level: 'Essential (day)', chart: 'orb',
+      what: 'The high and low of the first 5, 15 or 30 minutes of the regular session.',
+      read: 'The opening range is where overnight news and the opening auction resolve. Holding above it is bullish for the day; failing back inside a break is a common reversal trigger.',
+      settings: '5m for fast names, 15m as the default, 30m for a slower and more reliable read.',
+      best: 'Framing the entire day and providing an objective invalidation level.',
+      pitfall: 'On low-volume days the opening range is just the first noise of the day.' },
+
+    { n: 22, id: 'pdhl', name: 'Prior Day High / Low / Close & Pre-market Levels', cat: 'Levels', level: 'Essential (day)', chart: 'pdhl',
+      what: 'Yesterday\'s high, low and close, plus the pre-market range.',
+      read: 'These are the most-watched intraday levels after VWAP. Stops cluster just beyond them, which makes them prime targets for liquidity sweeps.',
+      settings: 'Mark them before the open, every day, without exception.',
+      best: 'Targets, invalidation levels, and anticipating where stop hunts occur.',
+      pitfall: 'Assuming they will hold. Their real value is knowing that everyone else is watching the same lines.' },
+
+    { n: 23, id: 'ichimoku', name: 'Ichimoku Cloud', cat: 'Trend', level: 'Advanced', chart: 'ichimoku',
+      what: 'A five-line system giving trend, momentum and support/resistance in one view. The "cloud" is the zone between two projected averages.',
+      read: 'Price above the cloud = bullish regime; inside = no trend; below = bearish. Cloud thickness measures how much support/resistance sits there.',
+      settings: '9 / 26 / 52 (the traditional settings).',
+      best: 'Swing traders who want a single self-contained trend framework.',
+      pitfall: 'Visually heavy and easy to over-interpret. Learn one line at a time.' },
+
+    { n: 24, id: 'donchian', name: 'Donchian Channels', cat: 'Breakout', level: 'Intermediate', chart: 'donchian',
+      what: 'The highest high and lowest low of the last N periods.',
+      read: 'A close above the upper channel is, by definition, an N-period breakout. This is the core of the original Turtle Trading system.',
+      settings: '20 periods for entries, 10 for exits, is the classic pairing.',
+      best: 'Purely mechanical breakout rules with no discretion.',
+      pitfall: 'Breakout systems have low win rates and long flat periods. They only work if you take every signal.' },
+
+    { n: 25, id: 'psar', name: 'Parabolic SAR', cat: 'Trailing stop', level: 'Intermediate', chart: 'psar',
+      what: 'Dots that trail price and accelerate as the trend extends, flipping sides when price crosses them.',
+      read: 'Best used as a trailing stop mechanism rather than an entry signal.',
+      settings: 'Step 0.02, max 0.2. A smaller step trails more loosely.',
+      best: 'Systematically trailing a winner without discretion.',
+      pitfall: 'In sideways markets it flips constantly and shreds an account through churn.' },
+
+    { n: 26, id: 'supertrend', name: 'Supertrend', cat: 'Trend', level: 'Intermediate', chart: 'supertrend',
+      what: 'An ATR-based trailing line that flips between support and resistance as trend changes.',
+      read: 'Green line below price = uptrend. It is a volatility-adaptive trailing stop with a clear visual state.',
+      settings: 'ATR 10, multiplier 3. Lower multipliers flip more often.',
+      best: 'Staying in trends longer than your instincts want you to.',
+      pitfall: 'Like every trailing tool, it gives back a chunk of the move at every reversal by design.' },
+
+    { n: 27, id: 'level2', name: 'Level 2 / Depth of Market', cat: 'Order flow', level: 'Advanced', chart: null,
+      what: 'The live order book: resting bids and offers at each price with their sizes.',
+      read: 'Shows where liquidity is resting right now. A large offer that keeps refreshing is a seller working an order; when it disappears, that resistance is gone.',
+      settings: 'Requires a real-time data subscription from a broker. This trainer uses historical bars and therefore does NOT simulate Level 2.',
+      best: 'Scalping and precise execution on fast-moving names.',
+      pitfall: 'Spoofing and iceberg orders mean the book lies. Displayed size is not committed size, and algorithms exploit traders who trust it.' },
+
+    { n: 28, id: 'tape', name: 'Time & Sales (the Tape)', cat: 'Order flow', level: 'Advanced', chart: null,
+      what: 'Every executed trade in sequence: price, size, time, and which side of the spread it hit.',
+      read: 'Prints at the ask show aggressive buying; prints at the bid show aggressive selling. Large block prints mark institutional activity.',
+      settings: 'Filter by minimum size to cut out the algorithmic noise.',
+      best: 'Confirming that a breakout has real aggression behind it, and timing precise entries.',
+      pitfall: 'Extremely fast and easy to misread. Also not simulated here — bar data cannot reconstruct the tape.' },
+
+    { n: 29, id: 'scanner', name: 'Scanners & Screeners', cat: 'Selection', level: 'Essential', chart: null,
+      what: 'Filters that surface candidates: gappers, high RVOL, new highs, unusual volume, float and price filters, or fundamental screens for swings.',
+      read: 'Your results are only as good as your filters. Most professional day traders trade a short list of 3-5 names chosen before the open.',
+      settings: 'Day trading: gap %, RVOL > 2, price range, average volume > 1M. Swing: base structure, 52-week-high proximity, relative strength vs the index.',
+      best: 'Deciding WHAT to trade, which matters more than any entry technique.',
+      pitfall: 'Watching 40 tickers means trading none of them well. Narrow the list.' },
+
+    { n: 30, id: 'calendar', name: 'Economic Calendar & Catalyst Tracking', cat: 'Context', level: 'Essential', chart: null,
+      what: 'Scheduled events that reprice markets: CPI, FOMC, jobs reports, earnings dates, product events, index rebalances.',
+      read: 'Know what is scheduled before you trade. Volatility around these events is not a bonus — it is a change in the rules of the game for that window.',
+      settings: 'Check daily before the open; check earnings dates before holding any swing position overnight.',
+      best: 'Avoiding unmanageable risk. Most catastrophic single-trade losses come from an event the trader did not know about.',
+      pitfall: 'Trading through an event with normal size. Either flatten, size down, or accept that your stop may be jumped entirely.' }
+  ];
+
+  TT.toolExtras = [
+    'Market internals — NYSE TICK, advance/decline, VIX — for reading whether the whole market supports your trade.',
+    'Relative strength versus the index: on an up day, the strongest stocks are the ones that rose more than SPY.',
+    'A position-size calculator (built into this trainer\'s order ticket).',
+    'A trade journal with screenshots — the single highest-return "tool" that is not on a chart.',
+    'Sector heat maps and correlation, so you do not unknowingly take the same trade five times.',
+    'Short interest and float data for understanding squeeze dynamics.'
+  ];
+})(window);

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trading Trainer — Day &amp; Swing Simulator (Practice Only)</title>
+<meta name="description" content="A free browser-based day and swing trading trainer: replay real historical stock data bar by bar, paper-trade with simulated funds, and get automated coaching on your entries, exits, stops and position sizing. Simulation only — not investment advice.">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Trading Trainer — Day &amp; Swing Simulator">
+<meta property="og:description" content="Practice day and swing trading on real historical data with paper funds, strategy playbooks, a candle classroom and automated trade review. Training purposes only.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<!-- ============ first-run legal gate ============ -->
+<div class="modal-back" id="gate" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="gate-title">
+    <h2 id="gate-title">⚠️ Training simulator — read before continuing</h2>
+    <div class="prose" id="gate-body"></div>
+    <label class="toggle" style="margin:14px 0">
+      <input type="checkbox" id="gate-check">
+      <span>I understand this is a simulation with imaginary money and historical data, that nothing here is investment advice, and that I alone am responsible for any real trading decision I make.</span>
+    </label>
+    <div class="row">
+      <button class="btn primary" id="gate-accept" disabled>Enter the trainer</button>
+      <a class="btn ghost" href="#" id="gate-legal">Read full terms</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============ post-trade review modal ============ -->
+<div class="modal-back" id="review-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rev-title">
+    <div class="panel-h">
+      <h2 id="rev-title" style="margin:0">Trade review</h2>
+      <button class="btn sm ghost" id="rev-close">Close</button>
+    </div>
+    <div id="rev-body"></div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="logo">📈</span> Trading Trainer</div>
+    <span class="sim-badge" title="Nothing here is real">Simulation · Practice only</span>
+    <div class="spacer"></div>
+    <div class="acct-strip" id="acct-strip"></div>
+  </div>
+  <nav class="nav" id="nav"></nav>
+</header>
+
+<main>
+  <!-- ============ SIMULATOR ============ -->
+  <section class="view active" id="view-sim">
+    <div class="grid sim-layout">
+      <div class="stack">
+        <div class="panel tight">
+          <div class="row" id="sim-setup"></div>
+        </div>
+
+        <div class="chart-wrap">
+          <div class="chart-top">
+            <div>
+              <div class="sym-name" id="c-sym">—</div>
+              <div class="tiny dim" id="c-meta">—</div>
+            </div>
+            <div class="ohlc-read" id="c-ohlc"></div>
+            <div class="spacer" style="flex:1"></div>
+            <div class="row tight" id="c-context"></div>
+          </div>
+          <canvas id="chart"></canvas>
+          <div class="replay-bar">
+            <button class="btn sm primary" id="btn-next" title="Advance one bar (N or Space)">▶ Next bar</button>
+            <button class="btn sm" id="btn-play" title="Auto-play">⏵ Play</button>
+            <select id="speed" style="width:auto" title="Playback speed">
+              <option value="1200">0.5×</option>
+              <option value="600" selected>1×</option>
+              <option value="300">2×</option>
+              <option value="120">5×</option>
+              <option value="40">15×</option>
+            </select>
+            <button class="btn sm" id="btn-skip" title="Skip 10 bars">⏩ +10</button>
+            <div class="progress"><i id="prog" style="width:0%"></i></div>
+            <span class="tiny dim" id="bar-count">—</span>
+            <button class="btn sm" id="btn-end" title="Finish this session and review it">Finish &amp; review</button>
+          </div>
+          <div class="replay-bar" id="overlay-bar" style="border-top:1px solid var(--line)"></div>
+        </div>
+
+        <div class="grid cards-2">
+          <div class="panel">
+            <div class="panel-h"><h3>Open position</h3><span class="tiny dim" id="pos-note"></span></div>
+            <div id="pos-body"><p class="muted small">Flat. Use the ticket to open a simulated position.</p></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><h3>Working orders</h3></div>
+            <div id="orders-body"><p class="muted small">No working orders.</p></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h"><h3>Trade blotter — this session</h3><button class="btn sm ghost" id="btn-session-review">Session review</button></div>
+          <div class="t-scroll" id="blotter"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-h"><h3>Performance</h3><span class="tiny dim">Simulated results. Hypothetical performance has inherent limitations.</span></div>
+          <div class="grid cards-4" id="stats-grid"></div>
+        </div>
+      </div>
+
+      <!-- right rail -->
+      <div class="stack">
+        <div class="panel">
+          <div class="panel-h"><h3>Order ticket</h3><span class="chip" id="ticket-mode">Paper</span></div>
+          <div id="ticket"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h3>Pre-trade coach</h3><span class="chip" id="coach-verdict">—</span></div>
+          <div id="coach-body"><p class="muted small">Fill in the ticket to see the checks.</p></div>
+        </div>
+        <div class="panel">
+          <div class="panel-h"><h3>On this chart right now</h3></div>
+          <div id="live-context"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CANDLE CLASSROOM ============ -->
+  <section class="view" id="view-candles">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-h"><h2>Candle Classroom</h2><button class="btn sm primary" id="btn-quiz">Start quiz</button></div>
+      <p class="muted small" style="margin:0">Every pattern below is detectable by the trainer on real charts. A pattern is a sentence about who won a bar — it only means something when you read it together with <strong>location</strong> (what level it printed at) and <strong>context</strong> (what came before it).</p>
+      <div class="filters" id="pattern-filters" style="margin-top:12px"></div>
+    </div>
+    <div id="quiz-box"></div>
+    <div class="grid cards-3" id="pattern-grid"></div>
+  </section>
+
+  <!-- ============ TOOLS ============ -->
+  <section class="view" id="view-tools">
+    <div class="panel" style="margin-bottom:14px">
+      <h2>The 30 tools traders actually use</h2>
+      <p class="muted small" style="margin:0">Ranked by how often they appear on real trading screens, not by how exotic they are. Tools marked <span class="chip on">on chart</span> can be switched on in the simulator. Any tool can be misused — each entry includes how it fails.</p>
+    </div>
+    <div id="tools-list"></div>
+    <div class="panel" style="margin-top:14px">
+      <h3>Honourable mentions</h3>
+      <ul class="small muted" id="tool-extras"></ul>
+    </div>
+  </section>
+
+  <!-- ============ STRATEGIES ============ -->
+  <section class="view" id="view-strategies">
+    <div class="panel" style="margin-bottom:14px">
+      <h2>Strategy playbooks</h2>
+      <p class="muted small" style="margin:0">Pick one in the simulator and the coach grades every trade against its rules. These are teaching frameworks, not recommendations — no strategy works in every market, and every one of them has losing streaks by design.</p>
+    </div>
+    <div id="strategy-list"></div>
+  </section>
+
+  <!-- ============ STRUCTURE LAB ============ -->
+  <section class="view" id="view-structure">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-h"><h2>Structure Lab</h2><div class="row tight" id="lab-controls"></div></div>
+      <p class="muted small" style="margin:0">Real charts with structure detected automatically, so you can train your eye on what a swing, a break of structure, an imbalance and a stop hunt actually look like. Toggle one element at a time — reading everything at once teaches nothing.</p>
+    </div>
+    <div class="chart-wrap" style="margin-bottom:14px">
+      <canvas id="lab-chart" style="display:block;width:100%;height:460px"></canvas>
+    </div>
+    <div class="grid cards-2" id="lab-readout"></div>
+  </section>
+
+  <!-- ============ OPTIONS ============ -->
+  <section class="view" id="view-options">
+    <div id="options-body"></div>
+  </section>
+
+  <!-- ============ LEARN ============ -->
+  <section class="view" id="view-learn">
+    <div class="grid" style="grid-template-columns:240px minmax(0,1fr);gap:14px" id="learn-layout">
+      <div class="panel" style="align-self:start;position:sticky;top:96px">
+        <h3>Curriculum</h3>
+        <div id="lesson-nav"></div>
+      </div>
+      <div class="panel prose" id="lesson-body"></div>
+    </div>
+  </section>
+
+  <!-- ============ JOURNAL ============ -->
+  <section class="view" id="view-journal">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-h"><h2>Trade journal</h2>
+        <div class="row tight">
+          <button class="btn sm" id="btn-export">Export JSON</button>
+          <button class="btn sm" id="btn-export-csv">Export CSV</button>
+          <button class="btn sm ghost" id="btn-clear-journal">Clear journal</button>
+        </div>
+      </div>
+      <p class="muted small" style="margin:0">Stored only in this browser. Every simulated trade you close is recorded here with its R multiple, MAE/MFE and process grade.</p>
+    </div>
+    <div class="grid cards-4" id="journal-stats" style="margin-bottom:14px"></div>
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-h"><h3>What the numbers say</h3></div>
+      <div id="journal-notes"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><h3>All trades</h3><span class="tiny dim" id="journal-count"></span></div>
+      <div class="t-scroll" id="journal-table"></div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section class="view" id="view-settings">
+    <div class="grid cards-2">
+      <div class="panel">
+        <h2>Account &amp; risk settings</h2>
+        <div id="settings-form"></div>
+      </div>
+      <div class="panel">
+        <h3>What this simulator assumes</h3>
+        <div id="assumptions"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LEGAL ============ -->
+  <section class="view" id="view-legal">
+    <div class="panel prose" id="legal-body"></div>
+  </section>
+</main>
+
+<footer>
+  <div class="legal-strip">
+    <p id="footer-legal"></p>
+    <p class="tiny">Historical market data captured <span id="data-date">2026-09-15</span> from a third-party provider and stored statically. Not live. Not a quote feed. Ticker symbols and company names are the property of their respective owners and appear for illustration only, with no affiliation or endorsement implied.</p>
+  </div>
+</footer>
+
+<div id="toasts"></div>
+
+<script src="assets/js/core.js"></script>
+<script src="assets/js/indicators.js"></script>
+<script src="assets/js/structure.js"></script>
+<script src="assets/js/chart.js"></script>
+<script src="assets/js/sim.js"></script>
+<script src="assets/js/strategies.js"></script>
+<script src="assets/js/review.js"></script>
+<script src="assets/js/patterns.js"></script>
+<script src="assets/js/tools.js"></script>
+<script src="assets/js/options.js"></script>
+<script src="assets/js/learn.js"></script>
+<script src="assets/js/legal.js"></script>
+<script src="data/daily.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/app-trade.js"></script>
+<script src="assets/js/app-views.js"></script>
+<script>window.addEventListener('DOMContentLoaded', function () { window.TT.app.boot(); });</script>
+</body>
+</html>
