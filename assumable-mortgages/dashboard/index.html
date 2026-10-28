@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assumable Mortgage Finder</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+      <div>
+        <h1>Assumable Mortgage Finder</h1>
+        <p id="dataMeta" class="muted">Loading listings…</p>
+      </div>
+    </div>
+    <div class="search">
+      <input id="q" type="search" placeholder="Search address, city, ZIP, keywords…" aria-label="Search listings">
+      <select id="state" aria-label="State"><option value="">All states</option></select>
+      <button id="toggleFilters" class="btn ghost only-mobile" aria-expanded="false">Filters</button>
+    </div>
+  </header>
+
+  <div id="demoBanner" class="banner" hidden>
+    Showing <strong>sample data</strong>. Run the scraper against a real source (see README) to replace it.
+  </div>
+
+  <div class="layout">
+    <aside id="filters" class="filters">
+      <section>
+        <h2>Loan</h2>
+        <div class="chips" id="loanTypes"></div>
+        <label class="field">Max interest rate <output id="maxRateOut"></output>
+          <input id="maxRate" type="range" min="1.5" max="8" step="0.125" value="8">
+        </label>
+        <label class="field">Min years left on loan
+          <select id="minYears"><option value="">Any</option><option>10</option><option>15</option><option>20</option><option>25</option></select>
+        </label>
+      </section>
+
+      <section>
+        <h2>Cost</h2>
+        <div class="row">
+          <label class="field">Min price<input id="minPrice" type="number" inputmode="numeric" placeholder="$0" step="10000"></label>
+          <label class="field">Max price<input id="maxPrice" type="number" inputmode="numeric" placeholder="No max" step="10000"></label>
+        </div>
+        <label class="field">Max cash to assume <span class="hint">(price − loan balance)</span>
+          <input id="maxGap" type="number" inputmode="numeric" placeholder="No max" step="5000">
+        </label>
+        <label class="field">Max monthly payment <span class="hint">(P&amp;I + HOA)</span>
+          <input id="maxPay" type="number" inputmode="numeric" placeholder="No max" step="100">
+        </label>
+      </section>
+
+      <section>
+        <h2>Home</h2>
+        <div class="row">
+          <label class="field">Beds<select id="minBeds"><option value="">Any</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option><option value="5">5+</option></select></label>
+          <label class="field">Baths<select id="minBaths"><option value="">Any</option><option value="1">1+</option><option value="1.5">1.5+</option><option value="2">2+</option><option value="3">3+</option></select></label>
+        </div>
+        <label class="field">Property type<select id="ptype"><option value="">Any</option></select></label>
+        <label class="field">Listed within
+          <select id="listedWithin"><option value="">Any time</option><option value="7">7 days</option><option value="30">30 days</option><option value="60">60 days</option></select>
+        </label>
+        <label class="check"><input id="favOnly" type="checkbox"> Saved homes only</label>
+      </section>
+
+      <section class="finance">
+        <h2>Your numbers</h2>
+        <label class="field">Today's 30-yr rate (for comparison)
+          <input id="marketRate" type="number" step="0.05" min="0" value="6.5">
+        </label>
+        <label class="field">Cash you have for the equity gap
+          <input id="cash" type="number" inputmode="numeric" placeholder="Not set" step="5000">
+        </label>
+        <label class="check"><input id="gapFinance" type="checkbox" checked> Finance any shortfall with a 2nd loan</label>
+        <label class="field">2nd-loan rate (20 yr)
+          <input id="secondRate" type="number" step="0.25" min="0" value="9">
+        </label>
+        <p class="hint">With cash set and gap financing off, homes you can't cover are hidden.</p>
+      </section>
+
+      <button id="reset" class="btn ghost wide">Reset filters</button>
+    </aside>
+
+    <main>
+      <section class="kpis" aria-label="Summary">
+        <div class="kpi"><span class="kpi-label">Matching homes</span><span class="kpi-value" id="kCount">–</span></div>
+        <div class="kpi"><span class="kpi-label">Median assumable rate</span><span class="kpi-value" id="kRate">–</span></div>
+        <div class="kpi"><span class="kpi-label">Median cash to assume</span><span class="kpi-value" id="kGap">–</span></div>
+        <div class="kpi"><span class="kpi-label">Median monthly savings</span><span class="kpi-value" id="kSave">–</span></div>
+      </section>
+
+      <div class="toolbar">
+        <span id="resultCount" class="muted"></span>
+        <div class="toolbar-right">
+          <label class="sort">Sort
+            <select id="sort">
+              <option value="savings">Biggest monthly savings</option>
+              <option value="rate">Lowest rate</option>
+              <option value="gap">Least cash needed</option>
+              <option value="payment">Lowest payment</option>
+              <option value="priceAsc">Price: low to high</option>
+              <option value="priceDesc">Price: high to low</option>
+              <option value="newest">Newest listed</option>
+            </select>
+          </label>
+          <div class="seg" role="group" aria-label="View">
+            <button id="viewCards" class="active" aria-pressed="true">Cards</button>
+            <button id="viewTable" aria-pressed="false">Table</button>
+          </div>
+          <button id="export" class="btn ghost">Export CSV</button>
+        </div>
+      </div>
+
+      <div id="results" class="cards"></div>
+      <div id="empty" class="empty" hidden>
+        <p>No homes match these filters.</p>
+        <button class="btn" onclick="document.getElementById('reset').click()">Reset filters</button>
+      </div>
+      <div id="loadError" class="empty" hidden>
+        <p>Couldn't load <code>data/listings.json</code>. Serve this folder over HTTP (<code>python -m http.server</code>) or load a file:</p>
+        <input id="fileInput" type="file" accept=".json,application/json">
+      </div>
+      <div class="pager"><button id="more" class="btn ghost" hidden>Show more</button></div>
+
+      <footer class="muted small">
+        Loan details are parsed from listing remarks and may be wrong or out of date. Confirm the rate, balance and
+        assumability with the seller's loan servicer. FHA, VA and USDA loans generally require the buyer to qualify with
+        the servicer; a non-veteran assuming a VA loan leaves the seller's entitlement tied to it. Payments shown exclude
+        taxes and insurance.
+      </footer>
+    </main>
+  </div>
+
+  <dialog id="detail"><div id="detailBody"></div></dialog>
+  <script src="app.js"></script>
+</body>
+</html>

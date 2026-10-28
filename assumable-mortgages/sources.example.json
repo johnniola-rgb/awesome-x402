@@ -1,0 +1,39 @@
+{
+  "_comment": "Copy to sources.json and adapt. Only scrape sites whose terms of service and robots.txt allow it; the scraper enforces robots.txt and a per-host delay.",
+  "sources": [
+    {
+      "name": "example-brokerage",
+      "type": "html",
+      "enabled": false,
+      "start_urls": ["https://www.example-brokerage.com/search?keywords=assumable&state=TX"],
+      "item_selector": "div.listing-card",
+      "next_selector": "a[rel=next]",
+      "max_pages": 5,
+      "require_assumable_mention": true,
+      "follow_detail": true,
+      "detail_description": "section.public-remarks",
+      "fields": {
+        "url": "a.card-link@href",
+        "address": ".address-line1",
+        "city_state_zip": ".address-line2",
+        "price": ".price",
+        "beds": ".beds",
+        "baths": ".baths",
+        "sqft": ".sqft",
+        "property_type": ".home-type",
+        "description": ".remarks"
+      }
+    },
+    {
+      "name": "my-mls-export",
+      "type": "csv",
+      "enabled": false,
+      "path": "exports/mls_assumable.csv"
+    },
+    {
+      "type": "sample",
+      "count": 400,
+      "seed": 42
+    }
+  ]
+}
